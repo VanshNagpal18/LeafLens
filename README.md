@@ -1,4 +1,4 @@
-# LeafLens -Plant Disease Detection System
+# LeafLens -Plant leaf Disease Detection System
 
  🌿 Plant Leaf Disease Detection System
 
