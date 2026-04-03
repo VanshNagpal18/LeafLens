@@ -1,5 +1,6 @@
 import streamlit as st
-import tensorflow as tf
+import keras
+from keras.models import load_model
 import numpy as np
 from PIL import Image
 import json
@@ -75,7 +76,7 @@ st.markdown("""
 # ---------------- LOAD MODEL ----------------
 @st.cache_resource
 def load_model():
-    return tf.keras.models.load_model("model.h5")
+    return load_model("model.h5", compile=False)
 
 model = load_model()
 
