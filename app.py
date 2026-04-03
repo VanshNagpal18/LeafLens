@@ -1,4 +1,4 @@
-import tensorflow as tf
+
 import streamlit as st
 from keras.models import load_model
 import numpy as np
@@ -76,11 +76,7 @@ st.markdown("""
 # ---------------- LOAD MODEL ----------------
 @st.cache_resource
 def load_model():
-    return tf.keras.models.load_model(
-        "model.h5",
-        compile=False,
-        safe_mode=False   
-    )
+    return load_model("model.keras")
 
 model = load_model()
 
