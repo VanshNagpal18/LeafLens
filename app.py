@@ -1,10 +1,9 @@
-
 import streamlit as st
-from keras.models import load_model
 import numpy as np
 from PIL import Image
 import json
 import matplotlib.pyplot as plt
+import tensorflow as tf
 
 # ---------------- CONFIG ----------------
 IMG_SIZE = (224, 224)
@@ -73,12 +72,14 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# ---------------- LOAD MODEL ----------------
+# ---------------- LOAD TFLITE MODEL ----------------
 @st.cache_resource
 def load_model():
-    return load_model("model.keras")
+    interpreter = tf.lite.Interpreter(model_path="model.tflite")
+    interpreter.allocate_tensors()
+    return interpreter
 
-model = load_model()
+interpreter = load_model()
 
 with open("class_names.json") as f:
     class_names = json.load(f)
@@ -87,7 +88,7 @@ with open("class_names.json") as f:
 def preprocess_image(image):
     image = image.resize(IMG_SIZE)
     img = np.array(image) / 255.0
-    img = np.expand_dims(img, axis=0)
+    img = np.expand_dims(img, axis=0).astype(np.float32)
     return img
 
 def clean_label(label):
@@ -96,7 +97,6 @@ def clean_label(label):
 # ---------------- REMEDIES ----------------
 remedies = {
     "healthy": "✅ No disease detected. Maintain proper watering, sunlight, and soil health.",
-
     "Powdery mildew": "🌿 Use sulfur-based fungicide. Improve air circulation.",
     "Leaf mold": "🍃 Avoid overhead watering. Use copper fungicide.",
     "Bacterial spot": "🧴 Remove infected leaves and use bactericides.",
@@ -113,7 +113,6 @@ show_top = st.sidebar.checkbox("Show Top Predictions", True)
 st.sidebar.info("Upload a plant leaf image to detect disease.")
 
 # ---------------- HEADER ----------------
-
 st.markdown(
     """
     <div class="header">
@@ -145,7 +144,14 @@ if uploaded_file:
 
     # ---------------- PREDICTION ----------------
     img = preprocess_image(image)
-    prediction = model.predict(img)
+
+    input_details = interpreter.get_input_details()
+    output_details = interpreter.get_output_details()
+
+    interpreter.set_tensor(input_details[0]['index'], img)
+    interpreter.invoke()
+
+    prediction = interpreter.get_tensor(output_details[0]['index'])
 
     predicted_class = class_names[np.argmax(prediction)]
     confidence = float(np.max(prediction))
@@ -174,32 +180,15 @@ if uploaded_file:
 
     st.markdown("---")
 
-if uploaded_file:
-
-    image = Image.open(uploaded_file)
-
-    img = preprocess_image(image)
-    prediction = model.predict(img)
-
-    predicted_class = class_names[np.argmax(prediction)]
-    confidence = float(np.max(prediction))
-
-    clean_name = clean_label(predicted_class)
-
-    # ---------------- RESULT ----------------
-    st.markdown(f"Prediction: {clean_name}")
-
-    # ---------------- REMEDY (FIXED) ----------------
+    # ---------------- REMEDY ----------------
     st.markdown('<p class="section-title">💊 Suggested Remedy</p>', unsafe_allow_html=True)
 
     if "healthy" in predicted_class.lower():
-
         st.markdown("""
         <div class="remedy-box">
         ✅ No disease detected. The plant is healthy.
         </div>
         """, unsafe_allow_html=True)
-
     else:
         remedy_text = "⚠️ General care: Remove infected leaves and use fungicide."
 
@@ -238,7 +227,7 @@ if uploaded_file:
 # ---------------- FOOTER ----------------
 st.markdown("""
 <div class="footer">
-            <h5><b>&copy; LeafLens 2026 , Made by: Vansh Nagpal</b></h5>
+<h5><b>&copy; LeafLens 2026 , Made by: Vansh Nagpal</b></h5>
 🌿 Built with Streamlit and Deep Learning | AI Plant Disease Detection System
 </div>
 """, unsafe_allow_html=True)
