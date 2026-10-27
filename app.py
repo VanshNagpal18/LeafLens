@@ -53,7 +53,6 @@ st.markdown("""
     font-size: 18px;
 }
 
-/* Remedy Box */
 .remedy-box {
     background-color: #ffffff;
     padding: 15px;
@@ -224,7 +223,7 @@ if uploaded_file:
         ax.set_xlabel("Probability")
         st.pyplot(fig)
 
-# ---------------- FOOTER ----------------
+# ---------------- FOOTER ----------------;
 st.markdown("""
 <div class="footer">
 <h5><b>&copy; LeafLens 2026 , Made by: Vansh Nagpal</b></h5>
